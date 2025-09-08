@@ -1,0 +1,507 @@
+/* ========= RESET & OGÓLNE ========= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #fafafa;
+  color: #222;
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ========= HEADER ========= */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.header .logo {
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.header nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.header nav a {
+  font-weight: 500;
+  color: #555;
+  transition: color 0.2s;
+}
+
+.header nav a.active,
+.header nav a:hover {
+  color: #d35400;
+}
+
+/* ========= STRONA GŁÓWNA ========= */
+.home {
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.home h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.home p {
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: #d35400;
+  color: #fff;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn:hover {
+  background: #a04000;
+}
+
+/* ========= PRODUKTY ========= */
+.products-page {
+  max-width: 1600px; /* Zwiększenie szerokości */
+  margin: 2rem auto;
+  padding: 0 0.5rem;
+}
+
+.products-page h2 {
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+/* ========= KARTA PRODUKTU ========= */
+.card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.card img {
+  width: 100%;
+  height: 200px;
+  object-fit: contain;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
+}
+
+.card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.card p {
+  font-size: 0.9rem;
+  color: #444;
+  margin-bottom: 0.5rem;
+  flex-grow: 1;
+}
+
+.card .price {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #d35400;
+  margin-bottom: 0.25rem;
+}
+
+.card .days {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.btn-small {
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
+  background: #d35400;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-small:hover {
+  background: #a04000;
+}
+
+/* ========= LOGOWANIE ========= */
+.login-page {
+  max-width: 400px;
+  margin: 4rem auto;
+  padding: 0 1rem;
+  text-align: center;
+}
+
+.login-page h2 {
+  margin-bottom: 1.5rem;
+}
+
+.login-page form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.login-page input {
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.login-page button {
+  padding: 0.75rem;
+  background: #d35400;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.login-page button:hover {
+  background: #a04000;
+}
+
+/* ========= STOPKA ========= */
+.footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: #fff;
+  border-top: 1px solid #e5e5e5;
+  margin-top: 3rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* ===== PASEK WYSZUKIWANIA ===== */
+.search-bar {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  margin-top: 2rem;
+  padding: 1rem 2rem;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.search-bar input {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 300px;
+}
+
+.search-bar button {
+  padding: 0.5rem 1rem;
+  background: #d35400;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.search-bar button:hover {
+  background: #a04000;
+}
+
+/* ===== LAYOUT: sidebar + content ===== */
+.products-layout {
+  display: flex;
+  gap: 2rem;
+  max-width: 1600px; /* Zwiększenie szerokości */
+  margin: 2rem auto;
+  padding: 0 0.5rem;
+}
+
+/* LEWY PASEK */
+.sidebar {
+  flex: 0 0 260px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 1.5rem;
+  height: fit-content;
+  position: sticky;
+  top: 2rem;
+}
+
+.sidebar h3 {
+  margin-bottom: 1rem;
+font-size: 1.2rem;
+}
+.filter-section {
+display: flex;
+flex-direction: row;
+gap: 0.5rem;
+margin-bottom: 1.5rem;
+}
+.filter-section label {
+font-weight: 600;
+font-size: 0.9rem;
+}
+.filter-section select,
+.filter-section input,
+.filter-section button {
+padding: 0.4rem 0.6rem;
+font-size: 0.95rem;
+border: 1px solid #ccc;
+border-radius: 4px;
+}
+.filter-section button {
+background: #d35400;
+color: #fff;
+border: none;
+cursor: pointer;
+}
+.filter-section button:hover {
+background: #a04000;
+}
+/* ===== PAGINACJA ===== */
+.pagination {
+display: flex;
+justify-content: center;
+margin-top: 2rem;
+}
+.pagination ul {
+list-style: none;
+display: flex;
+}
+.pagination ul li {
+margin: 0 0.5rem;
+}
+.pagination ul li a {
+padding: 0.5rem 1rem;
+background: #d35400;
+color: #fff;
+border-radius: 4px;
+text-decoration: none;
+cursor: pointer;
+}
+.pagination ul li.active a {
+background: #a04000;
+}
+/* ========= STRONA SZCZEGÓŁÓW PRODUKTU ========= */
+.product-detail {
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+}
+
+.product-detail-content {
+  display: flex;
+  gap: 2rem;
+}
+
+.product-detail-image img {
+  width: 100%;
+  max-width: 50rem;
+  height: 600px; /* Stała wysokość */
+  object-fit: contain;/* Skalowanie zdjęcia, aby pasowało do kontenera */
+  border-radius: 4px;
+}
+
+.product-detail-info {
+  flex: 1;
+}
+
+.product-detail-info h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.product-detail-info p {
+  font-size: 1rem;
+  color: #444;
+  margin-bottom: 1rem;
+}
+
+.product-detail-info .price {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #d35400;
+  margin-bottom: 1rem;
+}
+
+.product-detail-info .lead-time {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.product-detail-info .btn {
+  padding: 0.75rem 1.5rem;
+  background: #d35400;
+  color: #fff;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.product-detail-info .btn:hover {
+  background: #a04000;
+}
+.error {
+  color: red;
+  margin-bottom: 1rem;
+} 
+/* ========= ADMIN PANEL ========= */
+.admin-panel {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border, #e5e5e5);
+  border-radius: 6px;
+  box-shadow: var(--shadow, 0 2px 4px rgba(0,0,0,.05));
+  font-family: inherit;
+}
+
+.admin-panel h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  color: var(--text, #222);
+}
+
+/* --- form-elementy --- */
+.admin-panel label {
+  display: block;
+  margin-bottom: .25rem;
+  font-weight: 600;
+  font-size: .9rem;
+  color: var(--text-light, #666);
+}
+
+.admin-panel select,
+.admin-panel input[type="file"] {
+  width: 100%;
+  padding: .5rem .75rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  border: 1px solid var(--border, #e5e5e5);
+  border-radius: 4px;
+  background: #fff;
+  transition: border-color .2s;
+}
+
+.admin-panel select:focus,
+.admin-panel input[type="file"]:focus {
+  outline: none;
+  border-color: var(--primary, #d35400);
+}
+
+/* --- podgląd obrazka --- */
+.admin-preview {
+  margin: 1rem 0;
+  text-align: center;
+}
+.admin-preview img {
+  max-width: 200px;
+  height: auto;
+  border: 1px solid var(--border, #e5e5e5);
+  border-radius: 4px;
+}
+
+/* --- przycisk --- */
+.admin-upload-btn {
+  display: inline-block;
+  padding: .6rem 1.4rem;
+  background: var(--primary, #d35400);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background .2s;
+}
+.admin-upload-btn:hover:not(:disabled) {
+  background: var(--primary-dark, #a04000);
+}
+.admin-upload-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+/* ====== DODATKOWE STYLE DO LOGIN / REJESTRACJA ====== */
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: #d35400;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn:hover:not(:disabled) {
+  background: #a04000;
+}
+.btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.link {
+  color: #d35400;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.link:hover {
+  color: #a04000;
+}
+
+.login-page input,
+.register-page input {
+  margin-bottom: 1rem;
+}
+
+.error {
+  margin: 0 auto 1rem;
+  max-width: 320px;
+  text-align: center;
+}

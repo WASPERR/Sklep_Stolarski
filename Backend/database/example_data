@@ -1,0 +1,48 @@
+-- Tabela users (użytkownicy)
+INSERT INTO users (email, password_hash, first_name, last_name, phone_number, role) VALUES
+('jan.kowalski@email.com', '$2y$10$rQdS5h2JkL8mN9fV2xZz3uB4cD7eF6gH8iJ0kL2mN4oP6qR8sT0uV2w', 'Jan', 'Kowalski', '+48 123 456 789', 'customer'),
+('anna.nowak@email.com', '$2y$10$sRfT6i3kL9mN0gW3yZz4uB5dE8fG7hI9jK1lM3nO5pP7rR9sT1uV3x', 'Anna', 'Nowak', '+48 987 654 321', 'customer'),
+('piotr.wisniewski@email.com', '$2y$10$tSgU7j4lM0n1hX4zAa5vC6eF9gH8iJ0kL2mN3oP6qQ8sT2uV4yW', 'Piotr', 'Wiśniewski', '+48 555 123 456', 'carpenter'),
+('marek.kaczmarek@email.com', '$2y$10$uThV8k5mN1o2iY5bB6wC7fG0hI9jK1lM3nO4pQ7rR9sT3uV5zX', 'Marek', 'Kaczmarek', '+48 666 789 123', 'carpenter'),
+('katarzyna.lewandowska@email.com', '$2y$10$vUiW9l6nO2p3jZ6cC7xD8gH1iJ0kL2mN4oP5qR8sT4uV6aY', 'Katarzyna', 'Lewandowska', '+48 777 456 789', 'customer');
+
+-- Tabela categories (kategorie)
+INSERT INTO categories (name, description) VALUES
+('Stoły', 'Różnorodne stoły drewniane: jadalne, kawowe, konferencyjne'),
+('Krzesła', 'Krzesła i fotele wykonane z drewna z różnymi stylami oparć'),
+('Szafy', 'Szafy, komody i garderoby wykonane z litego drewna'),
+('Łóżka', 'Łóżka jednoosobowe i małżeńskie z litego drewna'),
+('Półki', 'Półki ścienne i regały na książki i dekoracje');
+
+-- Tabela products (produkty)
+INSERT INTO products (name, description, base_price, category_id, default_image_url, min_production_days) VALUES
+('Stół dębowy jadalny', 'Solidny stół jadalny z litego dębu o wymiarach 180x90cm', 2200.00, 1, '/images/stol-debowy.jpg', 21),
+('Krzesło wiejskie', 'Klasyczne krzesło wiejskie z oparciem z litego drewna sosnowego', 250.00, 2, '/images/krzeslo-wiejskie.jpg', 14),
+('Szafa garderobiana 3-drzwiowa', 'Przestronna szafa garderobiana z trzema drzwiami i półkami', 3200.00, 3, '/images/szafa-garderobiana.jpg', 28),
+('Łóżko małżeńskie z szufladami', 'Łóżko małżeńskie z pojemnymi szufladami na pościel', 2800.00, 4, '/images/lozko-malzenskie.jpg', 25),
+('Półka ścienna na książki', 'Długa półka ścienna idealna na książki i dekoracje', 450.00, 5, '/images/polka-scienna.jpg', 10),
+('Stół okrągły kawowy', 'Elegancki okrągły stół kawowy z drewna orzechowego', 1200.00, 1, '/images/stol-kawowy.jpg', 18),
+('Fotel bujany', 'Wygodny fotel bujany z litego drewna z miękkim siedziskiem', 890.00, 2, '/images/fotel-bujany.jpg', 20);
+
+-- Tabela orders (zamówienia)
+INSERT INTO orders (customer_id, total_price, status, order_date, estimated_delivery_date, customer_name, customer_phone, delivery_address, customization_data, notes) VALUES
+(1, 2700.00, 'in_production', '2023-10-15 09:30:00', '2023-11-15', 'Jan Kowalski', '+48 123 456 789', 'ul. Dębowa 15, 00-001 Warszawa', '{"kolor": "ciemny dąb", "rozmiar": "180x90cm", "wykończenie": "matowe"}', 'Proszę o dokładne oszlifowanie krawędzi'),
+(2, 4050.00, 'confirmed', '2023-10-20 14:15:00', '2023-11-25', 'Anna Nowak', '+48 987 654 321', 'ul. Sosnowa 23, 00-002 Kraków', '{"kolor": "jasny dąb", "dodatki": "dodatkowa półka", "numer_szafy": "SG-2023-001"}', 'Chcę otrzymać zdjęcia w trakcie produkcji'),
+(5, 1340.00, 'pending', '2023-10-25 11:20:00', '2023-11-20', 'Katarzyna Lewandowska', '+48 777 456 789', 'ul. Brzozowa 7, 00-003 Gdańsk', '{"materiał": "drewno wiśniowe", "wysokość": "45cm", "szerokość": "120cm"}', 'Proszę o kontakt przed rozpoczęciem produkcji');
+
+-- Tabela order_items (pozycje zamówienia)
+INSERT INTO order_items (order_id, product_id, quantity, unit_price, item_total) VALUES
+(1, 1, 1, 2200.00, 2200.00),
+(1, 2, 2, 250.00, 500.00),
+(2, 3, 1, 3200.00, 3200.00),
+(2, 2, 2, 250.00, 500.00),
+(2, 5, 1, 350.00, 350.00),
+(3, 6, 1, 1200.00, 1200.00),
+(3, 7, 1, 890.00, 890.00);
+
+-- Tabela carpenter_assignments (przydziały stolarzy)
+INSERT INTO carpenter_assignments (order_id, carpenter_id, assigned_date, status, notes) VALUES
+(1, 3, '2023-10-16 08:00:00', 'in_progress', 'Stolarz Piotr zajmuje się stołem i krzesłami'),
+(1, 4, '2023-10-16 08:00:00', 'assigned', 'Stolarz Marek pomaga w produkcji krzeseł'),
+(2, 3, '2023-10-21 09:30:00', 'assigned', 'Całe zamówienie do wykonania przez Piotra'),
+(3, 4, '2023-10-26 10:15:00', 'assigned', 'Stół kawowy i fotel bujany');
