@@ -210,6 +210,71 @@ app.get('/api/user', (req, res) => {
     return res.status(401).json({ error: 'Nieprawidłowy token' });
   }
 });
+// ===== WYLOGOWANIE – czyścimy ciasteczko =====
+app.post('/api/logout', (_req, res) => {
+  res.clearCookie('token');
+  res.json({ message: 'Wylogowano' });
+});
+// ===== KOSZYK =====
+
+// pobranie zawartości koszyka
+app.get('/api/cart', (req, res) => {
+  console.log('>>> /api/cart: ciasteczka', req.cookies);
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ cart: [] });
+
+  try {
+    const decoded = jwt.verify(token, 'ZMIEŃ_TO_NA_DŁUGI_CIĄG_ZNAKÓW');
+    const sql = `
+      SELECT c.product_id, p.name, p.base_price, c.quantity
+      FROM cart c
+      JOIN products p ON c.product_id = p.product_id
+      WHERE c.user_id = ?
+    `;
+    db.query(sql, [decoded.id], (err, rows) => {
+      if (err) {
+        console.error('>>> /api/cart: błąd SQL', err);
+        return res.status(500).json({ error: 'Błąd serwera' });
+      }
+      console.log('>>> /api/cart: wiersze', rows);
+      res.json(rows);
+    });
+  } catch (err) {
+    console.error('>>> /api/cart: błąd weryfikacji', err);
+    res.status(401).json({ cart: [] });
+  }
+});
+
+// dodanie / aktualizacja pozycji
+app.post('/api/cart', (req, res) => {
+  console.log('>>> /api/cart: body', req.body);
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: 'Brak autoryzacji' });
+
+  try {
+    const decoded = jwt.verify(token, 'ZMIEŃ_TO_NA_DŁUGI_CIĄG_ZNAKÓW');
+    const { product_id, quantity } = req.body;
+    if (!product_id || quantity < 1) return res.status(400).json({ error: 'Złe dane' });
+
+    const sql = `
+      INSERT INTO cart (user_id, product_id, quantity)
+      VALUES (?, ?, ?)
+      ON DUPLICATE KEY UPDATE quantity = VALUES(quantity)
+    `;
+    db.query(sql, [decoded.id, product_id, quantity], (err) => {
+      if (err) {
+        console.error('>>> /api/cart: błąd SQL', err);
+        return res.status(500).json({ error: 'Błąd serwera' });
+      }
+      console.log('>>> /api/cart: dodano');
+      res.json({ message: 'Dodano do koszyka' });
+    });
+  } catch (err) {
+    console.error('>>> /api/cart: błąd weryfikacji', err);
+    res.status(401).json({ error: 'Nieprawidłowy token' });
+  }
+});
+
 // ===== START =====
 const PORT = 8081;
 app.listen(PORT, () => {

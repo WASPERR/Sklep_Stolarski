@@ -505,3 +505,65 @@ background: #a04000;
   max-width: 320px;
   text-align: center;
 }
+/* Przycisk wylogowania */
+.logout-btn {
+  margin-left: 1rem;
+  padding: 0.4rem 0.8rem;
+  background: #d35400;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #a04000;
+}
+
+.logout-btn:active {
+  transform: scale(0.98);
+}
+/* ====== KOSZYK ====== */
+.cart-page {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+}
+
+.cart-page ul {
+  list-style: none;
+  padding: 0;
+}
+
+.cart-page li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.cart-page .error {
+  color: #d35400;
+  font-weight: 600;
+}
+/* ===== LINK DO KOSZYKA – dopasowany do nawigacji ===== */
+.cart-link {
+  margin-left: 1rem;
+  padding: 0.4rem 0.8rem;
+  font-weight: 500;
+  color: #555;                 /* ten sam co pozostałe linki */
+  text-decoration: none;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.cart-link:hover,
+.cart-link.active {
+  color: #d35400;              /* ten sam hover co pozostałe linki */
+  background: rgba(211, 84, 0, 0.08); /* delikatne tło na hover */
+}

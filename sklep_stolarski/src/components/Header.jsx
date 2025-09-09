@@ -15,14 +15,12 @@ export default function Header() {
       })
       .catch(err => {
         console.error('>>> Header: błąd /api/user', err);
-        alert('Sesja wygasła lub token jest nieprawidłowy. Zostałeś wylogowany.');
       })
       .finally(() => setLoading(false));
   }, []);
 
   const handleLogout = async () => {
     await api.post('/api/logout', {}, { withCredentials: true });
-    alert('Zostałeś pomyślnie wylogowany.');
     window.location.href = '/';
   };
 
@@ -30,17 +28,19 @@ export default function Header() {
     <header className="header">
       <div className="logo">Sklep Stolarski</div>
       <nav>
-        <NavLink to="/">Strona główna</NavLink>
-        <NavLink to="/products">Produkty</NavLink>
+        <NavLink to="/" className="header nav a">Strona główna</NavLink>
+        <NavLink to="/products" className="header nav a">Produkty</NavLink>
+        <NavLink to="/cart" className="header nav a">Koszyk</NavLink>
+
         {loading ? (
           <span>Ładowanie...</span>
         ) : user ? (
           <>
             <span>Witaj, {user.first_name}!</span>
-            <button onClick={handleLogout}>Wyloguj</button>
+            <button onClick={handleLogout} className="logout-btn">Wyloguj</button>
           </>
         ) : (
-          <NavLink to="/login">Zaloguj się</NavLink>
+          <NavLink to="/login" className="header nav a">Zaloguj się</NavLink>
         )}
       </nav>
     </header>
