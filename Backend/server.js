@@ -1,9 +1,18 @@
 const express = require('express');
 const mysql   = require('mysql2');
 const cors    = require('cors');
+const cookieParser = require('cookie-parser');
 
 const app = express();
-app.use(cors());
+
+app.use(cookieParser());
+
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());   // przydatne dla POST/PUT
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -119,56 +128,36 @@ app.get('/api/products/:id/image', (req, res) => {
     res.send(image_data);
   });
 });
-// ===== LOGOWANIE – FULL DEBUG =====
+// ===== LOGOWANIE – ustawiamy ciasteczko =====
 app.post('/api/login', async (req, res) => {
-  console.log('>>> ENTER /api/login');
-  console.log('>>> req.body:', req.body);
-
   const { email, password } = req.body;
-  if (!email || !password) {
-    console.log('>>> brak danych – 400');
-    return res.status(400).json({ error: 'Brak e-maila lub hasła' });
-  }
+  if (!email || !password) return res.status(400).json({ error: 'Brak danych' });
 
-  // realny SQL – dokładnie Twoje kolumny
   const sql = `SELECT user_id, email, password_hash, first_name, last_name, role
-               FROM users
-               WHERE email = ?
-               LIMIT 1`;
-
+               FROM users WHERE email = ? LIMIT 1`;
   db.query(sql, [email], async (err, rows) => {
-    if (err) {
-      console.error('>>> błąd SQL:', err);
-      return res.status(500).json({ error: 'Błąd serwera' });
-    }
-    console.log('>>> znaleziono wierszy:', rows.length);
-    if (rows.length === 0) {
-      console.log('>>> brak użytkownika – 401');
-      return res.status(401).json({ error: 'Nieprawidłowe dane logowania' });
-    }
+    if (err) return res.status(500).json({ error: 'Błąd serwera' });
+    if (rows.length === 0) return res.status(401).json({ error: 'Nieprawidłowe dane logowania' });
 
     const user = rows[0];
-    console.log('>>> hash z bazy :', user.password_hash);
-    console.log('>>> plain hasło :', password);
-
-    // porównanie – bcryptjs akceptuje $2y$
     const match = await bcrypt.compare(password, user.password_hash);
-    console.log('>>> bcrypt wynik:', match);
-    if (!match) {
-      console.log('>>> hasło nie pasuje – 401');
-      return res.status(401).json({ error: 'Nieprawidłowe dane logowania' });
-    }
+    if (!match) return res.status(401).json({ error: 'Nieprawidłowe dane logowania' });
 
-    // JWT – 24h
     const token = jwt.sign(
       { id: user.user_id, email: user.email, role: user.role },
-      'ZMIEŃ_TO_NA_DŁUGI_CIĄG_ZNAKÓW', // ← w produkcji process.env.JWT_SECRET
+      'ZMIEŃ_TO_NA_DŁUGI_CIĄG_ZNAKÓW',
       { expiresIn: '24h' }
     );
 
-    console.log('>>> login OK, wysyłam token');
+    // Ustawiamy ciasteczko HTTP-only
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Lax',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+    // Zwracamy tylko dane użytkownika (bez tokenu)
     res.json({
-      token,
       user: {
         user_id: user.user_id,
         email: user.email,
@@ -179,18 +168,48 @@ app.post('/api/login', async (req, res) => {
     });
   });
 });
-(async () => {
-  const hash = await bcrypt.hash('NoweHaslo123', 10);
-  console.log('>>> Hash dla NoweHaslo123:', hash);
-})();
-(async () => {
-  const hash = await bcrypt.hash('NoweHaslo123', 10);
-  console.log('>>> Hash dla NoweHaslo123:', hash);
-})();
-(async () => {
-  const hash = await bcrypt.hash('NoweHaslo123', 10);
-  console.log('>>> Hash dla NoweHaslo123:', hash);
-})();
+// ===== REJESTRACJA =====
+app.post('/api/register', async (req, res) => {
+  const { email, password, first_name, last_name } = req.body;
+  if (!email || !password || !first_name || !last_name) {
+    return res.status(400).json({ error: 'Wszystkie pola są wymagane' });
+  }
+
+  const hash = await bcrypt.hash(password, 10);
+
+  const sql = `
+    INSERT INTO users (email, password_hash, first_name, last_name, role)
+    VALUES (?, ?, ?, ?, 'customer')
+  `;
+
+  db.query(sql, [email, hash, first_name, last_name], (err, result) => {
+    if (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        return res.status(400).json({ error: 'Email już zajęty' });
+      }
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+    res.status(201).json({ message: 'Konto utworzone' });
+  });
+});
+// ===== Pobranie danych użytkownika – z ciasteczka =====
+app.get('/api/user', (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: 'Brak autoryzacji' });
+
+  try {
+    const decoded = jwt.verify(token, 'ZMIEŃ_TO_NA_DŁUGI_CIĄG_ZNAKÓW');
+    const sql = `SELECT user_id, email, first_name, last_name, role
+                 FROM users WHERE user_id = ? LIMIT 1`;
+    db.query(sql, [decoded.id], (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Błąd serwera' });
+      if (rows.length === 0) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+      res.json(rows[0]);
+    });
+  } catch (err) {
+    return res.status(401).json({ error: 'Nieprawidłowy token' });
+  }
+});
 // ===== START =====
 const PORT = 8081;
 app.listen(PORT, () => {
