@@ -31,7 +31,11 @@ db.connect(err => {
   if (err) throw err;
   console.log('MySQL connected');
 });
-
+// LOGOWANIE WSZYSTKICH ŻĄDAŃ /api/cart
+app.use('/api/cart', (req, res, next) => {
+  console.log('>>> CART', req.method, req.url, 'body:', req.body, 'cookies:', req.cookies);
+  next();
+});
 // ===== ROUTY =====
 
 // 1) Test
@@ -46,7 +50,7 @@ app.get('/api/products', (req, res) => {
   const col     = allowed.includes(sort) ? sort : 'name';
   const dir     = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
-  const sql = `SELECT * FROM products ORDER BY ${col} ${dir}`;
+  const sql = `SELECT p.*, c.name as category_name FROM products p JOIN categories c ON p.category_id = c.category_id ORDER BY ${col} ${dir}`;
   db.query(sql, (err, rows) => {
     if (err) return res.status(500).json({ error: err });
     res.json(rows);
@@ -126,6 +130,95 @@ app.get('/api/products/:id/image', (req, res) => {
     const { image_data, image_type } = rows[0];
     res.set('Content-Type', image_type);
     res.send(image_data);
+  });
+});
+
+// ===== KATEGORIE =====
+
+// Pobierz wszystkie kategorie
+app.get('/api/categories', (req, res) => {
+  const sql = 'SELECT * FROM categories ORDER BY name';
+  db.query(sql, (err, rows) => {
+    if (err) return res.status(500).json({ error: err });
+    res.json(rows);
+  });
+});
+
+// ===== PRODUKTY CRUD =====
+
+// Dodaj produkt
+app.post('/api/products', upload.single('image'), (req, res) => {
+  const { name, description, base_price, category_id } = req.body;
+  if (!name || !description || !base_price || !category_id) {
+    return res.status(400).json({ error: 'Wszystkie pola są wymagane' });
+  }
+
+  const sql = `
+    INSERT INTO products (name, description, base_price, category_id)
+    VALUES (?, ?, ?, ?)
+  `;
+  db.query(sql, [name, description, base_price, category_id], (err, result) => {
+    if (err) return res.status(500).json({ error: 'Błąd zapisu' });
+    const productId = result.insertId;
+
+    // Jeśli obrazek, zapisz go
+    if (req.file) {
+      const { buffer, mimetype } = req.file;
+      const imgSql = `
+        INSERT INTO product_images (product_id, image_data, image_type)
+        VALUES (?, ?, ?)
+      `;
+      db.query(imgSql, [productId, buffer, mimetype], (imgErr) => {
+        if (imgErr) console.error('Błąd zapisu obrazka:', imgErr);
+      });
+    }
+
+    res.status(201).json({ message: 'Produkt dodany', product_id: productId });
+  });
+});
+
+// Edytuj produkt
+app.put('/api/products/:id', upload.single('image'), (req, res) => {
+  const { id } = req.params;
+  const { name, description, base_price, category_id } = req.body;
+  if (!name || !description || !base_price || !category_id) {
+    return res.status(400).json({ error: 'Wszystkie pola są wymagane' });
+  }
+
+  const sql = `
+    UPDATE products
+    SET name = ?, description = ?, base_price = ?, category_id = ?
+    WHERE product_id = ?
+  `;
+  db.query(sql, [name, description, base_price, category_id, id], (err) => {
+    if (err) return res.status(500).json({ error: 'Błąd aktualizacji' });
+
+    // Jeśli obrazek, zaktualizuj
+    if (req.file) {
+      const { buffer, mimetype } = req.file;
+      const imgSql = `
+        INSERT INTO product_images (product_id, image_data, image_type)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          image_data = VALUES(image_data),
+          image_type = VALUES(image_type)
+      `;
+      db.query(imgSql, [id, buffer, mimetype], (imgErr) => {
+        if (imgErr) console.error('Błąd aktualizacji obrazka:', imgErr);
+      });
+    }
+
+    res.json({ message: 'Produkt zaktualizowany' });
+  });
+});
+
+// Usuń produkt
+app.delete('/api/products/:id', (req, res) => {
+  const { id } = req.params;
+  const sql = 'DELETE FROM products WHERE product_id = ?';
+  db.query(sql, [id], (err) => {
+    if (err) return res.status(500).json({ error: 'Błąd usunięcia' });
+    res.json({ message: 'Produkt usunięty' });
   });
 });
 // ===== LOGOWANIE – ustawiamy ciasteczko =====
@@ -217,11 +310,10 @@ app.post('/api/logout', (_req, res) => {
 });
 // ===== KOSZYK =====
 
-// pobranie zawartości koszyka
+// ===== POBIERANIE KOSZYKA =====
 app.get('/api/cart', (req, res) => {
-  console.log('>>> /api/cart: ciasteczka', req.cookies);
   const token = req.cookies.token;
-  if (!token) return res.status(401).json({ cart: [] });
+  if (!token) return res.status(401).json({ error: 'Brak autoryzacji' });
 
   try {
     const decoded = jwt.verify(token, 'ZMIEŃ_TO_NA_DŁUGI_CIĄG_ZNAKÓW');
@@ -232,49 +324,150 @@ app.get('/api/cart', (req, res) => {
       WHERE c.user_id = ?
     `;
     db.query(sql, [decoded.id], (err, rows) => {
-      if (err) {
-        console.error('>>> /api/cart: błąd SQL', err);
-        return res.status(500).json({ error: 'Błąd serwera' });
-      }
-      console.log('>>> /api/cart: wiersze', rows);
+      if (err) return res.status(500).json({ error: 'Błąd serwera' });
       res.json(rows);
     });
-  } catch (err) {
-    console.error('>>> /api/cart: błąd weryfikacji', err);
-    res.status(401).json({ cart: [] });
+  } catch {
+    res.status(401).json({ error: 'Nieprawidłowy token' });
   }
 });
-
-// dodanie / aktualizacja pozycji
+// ===== DODAJE PRODUKT DO KOSZYKA =====
 app.post('/api/cart', (req, res) => {
-  console.log('>>> /api/cart: body', req.body);
+  console.log('>>> /api/cart: żądanie', req.body);
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ error: 'Brak autoryzacji' });
 
   try {
     const decoded = jwt.verify(token, 'ZMIEŃ_TO_NA_DŁUGI_CIĄG_ZNAKÓW');
     const { product_id, quantity } = req.body;
-    if (!product_id || quantity < 1) return res.status(400).json({ error: 'Złe dane' });
+    if (!product_id || quantity < 1)
+      return res.status(400).json({ error: 'Złe dane' });
 
     const sql = `
       INSERT INTO cart (user_id, product_id, quantity)
       VALUES (?, ?, ?)
-      ON DUPLICATE KEY UPDATE quantity = VALUES(quantity)
+      ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)
     `;
-    db.query(sql, [decoded.id, product_id, quantity], (err) => {
+    db.query(sql, [decoded.id, product_id, quantity], (err, result) => {
       if (err) {
-        console.error('>>> /api/cart: błąd SQL', err);
+        console.log('>>> SQL ERROR:', err.code, err.message);
         return res.status(500).json({ error: 'Błąd serwera' });
       }
-      console.log('>>> /api/cart: dodano');
+      console.log('>>> SQL OK, affectedRows:', result.affectedRows);
       res.json({ message: 'Dodano do koszyka' });
     });
-  } catch (err) {
-    console.error('>>> /api/cart: błąd weryfikacji', err);
+  } catch (e) {
+    console.log('>>> JWT error:', e.message);
+    res.status(401).json({ error: 'Nieprawidłowy token' });
+  }
+});
+// ===== AKTUALIZUJE ILOŚĆ PRODUKTU W KOSZYKU =====
+app.patch('/api/cart/:id', (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: 'Brak autoryzacji' });
+
+  try {
+    const decoded = jwt.verify(token, 'ZMIEŃ_TO_NA_DŁUGI_CIĄG_ZNAKÓW');
+    const { quantity } = req.body;
+    if (quantity < 1) return res.status(400).json({ error: 'Zła ilość' });
+
+    const sql = `
+      UPDATE cart
+      SET quantity = ?
+      WHERE user_id = ? AND product_id = ?
+    `;
+    db.query(sql, [quantity, decoded.id, req.params.id], (err) => {
+      if (err) return res.status(500).json({ error: 'Błąd serwera' });
+      res.json({ message: 'Ilość zaktualizowana' });
+    });
+  } catch {
     res.status(401).json({ error: 'Nieprawidłowy token' });
   }
 });
 
+// +1 sztuka
+app.patch('/api/cart/:id/increment', (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: 'Brak autoryzacji' });
+
+  try {
+    const decoded = jwt.verify(token, 'ZMIEŃ_TO_NA_DŁUGI_CIĄG_ZNAKÓW');
+    const sql = `
+      INSERT INTO cart (user_id, product_id, quantity)
+      VALUES (?, ?, 1)
+      ON DUPLICATE KEY UPDATE quantity = quantity + 1
+    `;
+    db.query(sql, [decoded.id, req.params.id], (err) => {
+      if (err) return res.status(500).json({ error: 'Błąd serwera' });
+      res.json({ message: 'Zwiększono' });
+    });
+  } catch {
+    res.status(401).json({ error: 'Nieprawidłowy token' });
+  }
+});
+
+// -1 sztuka (quantity nie spadnie poniżej 0, a rekord usuwamy gdy 0)
+app.patch('/api/cart/:id/decrement', (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: 'Brak autoryzacji' });
+
+  try {
+    const decoded = jwt.verify(token, 'ZMIEŃ_TO_NA_DŁUGI_CIĄG_ZNAKÓW');
+
+    // krok 1: zmniejsz
+    const sqlDec = `
+      UPDATE cart
+      SET quantity = GREATEST(quantity - 1, 0)
+      WHERE user_id = ? AND product_id = ?
+    `;
+    db.query(sqlDec, [decoded.id, req.params.id], (err) => {
+      if (err) return res.status(500).json({ error: 'Błąd serwera' });
+
+      // krok 2: jeśli 0 – usuń
+      const sqlDel = `
+        DELETE FROM cart
+        WHERE user_id = ? AND product_id = ? AND quantity = 0
+      `;
+      db.query(sqlDel, [decoded.id, req.params.id], () => {
+        /* błąd niekrytyczny */
+        res.json({ message: 'Zmniejszono' });
+      });
+    });
+  } catch {
+    res.status(401).json({ error: 'Nieprawidłowy token' });
+  }
+});
+// ===== USUWA KONKRETNY PRODUKT Z KOSZYKA =====
+app.delete('/api/cart/:id', (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: 'Brak autoryzacji' });
+
+  try {
+    const decoded = jwt.verify(token, 'ZMIEŃ_TO_NA_DŁUGI_CIĄG_ZNAKÓW');
+    const sql = `DELETE FROM cart WHERE user_id = ? AND product_id = ?`;
+    db.query(sql, [decoded.id, req.params.id], (err, result) => {
+      if (err) return res.status(500).json({ error: 'Błąd serwera' });
+      res.json({ message: 'Usunięto z koszyka' });
+    });
+  } catch {
+    res.status(401).json({ error: 'Nieprawidłowy token' });
+  }
+});
+app.delete('/api/cart', (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: 'Brak autoryzacji' });
+
+  try {
+    const decoded = jwt.verify(token, 'ZMIEŃ_TO_NA_DŁUGI_CIĄG_ZNAKÓW');
+    const sql = `DELETE FROM cart WHERE user_id = ?`;
+    db.query(sql, [decoded.id], (err) => {
+      if (err) return res.status(500).json({ error: 'Błąd serwera' });
+      res.json({ message: 'Koszyk wyczyszczony' });
+    });
+  } catch {
+    res.status(401).json({ error: 'Nieprawidłowy token' });
+  }
+});
 // ===== START =====
 const PORT = 8081;
 app.listen(PORT, () => {

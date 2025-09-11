@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/axios';
 
 export default function Login() {
@@ -14,6 +15,9 @@ export default function Login() {
     try {
       const { data } = await api.post('/api/login', { email, password }, { withCredentials: true });
       console.log('>>> Login: odpowiedź serwera', data);
+
+      localStorage.setItem('token', 'logged');
+      console.log('>>> Login: token zapisany w localStorage');  
       alert('Zalogowano pomyslnie');
       window.location.href = '/';
     } catch (err) {
@@ -31,6 +35,7 @@ export default function Login() {
         <input type="password" placeholder="Haslo" value={password} onChange={(e) => setPassword(e.target.value)} required />
         <button type="submit">Zaloguj sie</button>
       </form>
+      <p>Nie masz konta? <Link to="/register">Zarejestruj się</Link></p>
     </main>
   );
 }
